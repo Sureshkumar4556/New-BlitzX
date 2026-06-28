@@ -7,10 +7,17 @@ REFRESH_COOKIE_NAME = "refresh_token"
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    # Frontend (e.g. www.blitzxcreative.com) and backend (e.g. onrender.com) live on
+    # different domains in production, so the browser treats every API call as a
+    # cross-site request. Cookies need SameSite="none" to be sent in that case —
+    # but browsers only allow SameSite="none" when Secure=true (i.e. HTTPS).
+    # Locally (http://localhost, COOKIE_SECURE=false) we fall back to "lax".
+    samesite = "none" if settings.COOKIE_SECURE else "lax"
+
     common = dict(
         httponly=True,
         secure=settings.COOKIE_SECURE,
-        samesite="lax",
+        samesite=samesite,
         path="/",
     )
     response.set_cookie(
